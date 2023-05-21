@@ -26,4 +26,16 @@ void main()
 	outNormal = vec4(tnorm, 1.0);
 
 	outAlbedo = texture(samplerColor, inUV);
+
+	mat3 RGB2YCoCg = mat3(
+		0.25, 0.5, 0.25,
+		0.5, 0.0, -0.5,
+		-0.25, 0.5, -0.25
+	);
+
+	ivec2 crd = ivec2(gl_FragCoord.xy);
+
+	vec3 YCoCg = RGB2YCoCg * outAlbedo.rgb;
+	outAlbedo.rg = ((crd.x & 1) == (crd.y & 1)) ? YCoCg.rg : YCoCg.rb;
+	//outAlbedo = vec4(YCoCg, 1.0);
 }

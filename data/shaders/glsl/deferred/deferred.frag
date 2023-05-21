@@ -8,6 +8,8 @@ layout (location = 0) in vec2 inUV;
 
 layout (location = 0) out vec4 outFragcolor;
 
+#define THRESH 0.117647
+
 struct Light {
 	vec4 position;
 	vec3 color;
@@ -21,12 +23,66 @@ layout (binding = 4) uniform UBO
 	int displayDebugTarget;
 } ubo;
 
+float decode(vec2 a0, vec2 a1, vec2 a2, vec2 a3, vec2 a4)
+{
+	vec4 lum = vec4(a1.x, a2.x , a3.x, a4.x);
+	vec4 w = 1.0-step(THRESH, abs(lum - a0.x));
+	float W = w.x + w.y + w.z + w.w;
+	//handle the special case where all the weights are zero
+	w.x = (W==0.0)? 1.0:w.x; W = (W==0.0)? 1.0:W;
+	return (w.x*a1.y+w.y*a2.y+w.z*a3.y+w.w*a4.y)/W;
+}
+
+
 void main() 
 {
 	// Get G-Buffer values
 	vec3 fragPos = texture(samplerposition, inUV).rgb;
 	vec3 normal = texture(samplerNormal, inUV).rgb;
-	vec4 albedo = texture(samplerAlbedo, inUV);
+	vec2 rawData = texture(samplerAlbedo, inUV).rg;
+
+	ivec2 crd = ivec2(gl_FragCoord.xy);
+	vec3 YCoCg = vec3(rawData.r, 0.0, 0.0);
+	vec2 screenSize = 1.0 / textureSize(samplerAlbedo, 0);
+	if((crd.x & 1) == (crd.y & 1))
+	{
+		YCoCg.g = rawData.g;
+		YCoCg.b = (
+			texture(samplerAlbedo, inUV + vec2(screenSize.x, 0.0)).g +
+			texture(samplerAlbedo, inUV - vec2(screenSize.x, 0.0)).g +
+			texture(samplerAlbedo, inUV + vec2(screenSize.y, 0.0)).g +
+			texture(samplerAlbedo, inUV - vec2(screenSize.y, 0.0)).g
+		) / 4.0;
+		//YCoCg.b = decode(rawData, 
+		//texture(samplerAlbedo, inUV + vec2(screenSize.x, 0.0)).rg, 
+		//texture(samplerAlbedo, inUV + vec2(0.0, screenSize.y)).rg, 
+		//texture(samplerAlbedo, inUV - vec2(screenSize.x, 0.0)).rg, 
+		//texture(samplerAlbedo, inUV - vec2(0.0, screenSize.y)).rg);
+	}
+	else
+	{
+		YCoCg.b = rawData.g;
+		YCoCg.g = (
+			texture(samplerAlbedo, inUV + vec2(screenSize.x, 0.0)).g +
+			texture(samplerAlbedo, inUV - vec2(screenSize.x, 0.0)).g +
+			texture(samplerAlbedo, inUV + vec2(screenSize.y, 0.0)).g +
+			texture(samplerAlbedo, inUV - vec2(screenSize.y, 0.0)).g
+		) / 4.0;
+		//YCoCg.g = decode(rawData, 
+		//texture(samplerAlbedo, inUV + vec2(screenSize.x, 0.0)).rg, 
+		//texture(samplerAlbedo, inUV + vec2(0.0, screenSize.y)).rg, 
+		//texture(samplerAlbedo, inUV - vec2(screenSize.x, 0.0)).rg, 
+		//texture(samplerAlbedo, inUV - vec2(0.0, screenSize.y)).rg);
+	}
+
+	mat3 YCoCg2RGB = mat3(
+	1.0, 1.0, -1.0,
+	1.0, 0.0, 1.0,
+	1.0, -1.0, -1.0);
+
+	vec4 albedo = vec4(YCoCg2RGB * YCoCg, 1.0);
+
+	//albedo = vec4(YCoCg2RGB * texture(samplerAlbedo, inUV).rgb, 1.0);
 	
 	// Debug display
 	if (ubo.displayDebugTarget > 0) {

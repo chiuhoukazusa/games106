@@ -6,8 +6,8 @@
 * This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 */
 
-#include "vulkanexamplebase.h"
-#include "VulkanglTFModel.h"
+#include "../../base/vulkanexamplebase.h"
+#include "../../base/VulkanglTFModel.h"
 
 #define ENABLE_VALIDATION false
 

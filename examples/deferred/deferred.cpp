@@ -9,7 +9,7 @@
 #include "vulkanexamplebase.h"
 #include "VulkanglTFModel.h"
 
-#define ENABLE_VALIDATION false
+#define ENABLE_VALIDATION true
 
 // Texture properties
 #define TEX_DIM 2048
@@ -255,7 +255,7 @@ public:
 
 		// Albedo (color)
 		createAttachment(
-			VK_FORMAT_R8G8B8A8_UNORM,
+			VK_FORMAT_R16G16B16A16_SFLOAT,
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 			&offScreenFrameBuf.albedo);
 
@@ -801,6 +801,10 @@ public:
 		if (!prepared)
 			return;
 		draw();
+		
+		int screenwidth = GetSystemMetrics(SM_CXSCREEN);
+		int screenheight = GetSystemMetrics(SM_CYSCREEN);
+		printf("%d,%d\n", screenwidth, screenheight);
 		if (!paused)
 		{
 			updateUniformBufferComposition();

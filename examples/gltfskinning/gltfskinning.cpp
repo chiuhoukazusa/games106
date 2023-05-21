@@ -598,7 +598,10 @@ void VulkanglTFModel::drawNode(VkCommandBuffer commandBuffer, VkPipelineLayout p
 		// Pass the final matrix to the vertex shader using push constants
 		vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &nodeMatrix);
 		// Bind SSBO with skin data for this node to set 1
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1, 1, &skins[node.skin].descriptorSet, 0, nullptr);
+		if(node.skin != -1)
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1, 1, &skins[node.skin].descriptorSet, 0, nullptr);
+		else
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1, 1, nullptr, 0, nullptr);
 		for (VulkanglTFModel::Primitive &primitive : node.mesh.primitives)
 		{
 			if (primitive.indexCount > 0)
@@ -967,7 +970,8 @@ void VulkanExample::updateUniformBuffers()
 
 void VulkanExample::loadAssets()
 {
-	loadglTFFile(getAssetPath() + "models/CesiumMan/glTF/CesiumMan.gltf");
+	//loadglTFFile(getAssetPath() + "models/CesiumMan/glTF/CesiumMan.gltf");
+	loadglTFFile(getAssetPath() + "buster_drone/busterDrone.gltf"); 
 }
 
 void VulkanExample::prepare()
